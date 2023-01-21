@@ -1,4 +1,5 @@
 runs:
+  on: 'push'
   using: 'docker'
   image: 'Dockerfile'
 
