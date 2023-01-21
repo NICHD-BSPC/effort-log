@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block scripts %}
+<script>
+$(document).ready( function () {
+    $('#myTable').DataTable( {
+        "paging": true,
+        "order": [[ 0, "desc" ]]
+    } );
+} );
+
+// Thanks to https://blog.heptanalytics.com/flask-plotly-dashboard/
+//
+// "select_personnel" is the selection dropdown created below; run the
+// following function whenever it changes:
+$('#select_personnel, input:radio[name=weekend_toggle], input:radio[name=color_by]').on('change', function () {
+    $.ajax({
+
+        // The route to /bar in routes.py accepts an optional personnel and
+        // returns the JSON for the bar plot created using that personnel.
+        url: "/bar",
+        type: "GET",
+        contentType: 'application/json;charset=UTF_8',
+
+        // This "selected" key will be accessed by the function in routes.py
+        // via the `requests.args` dict.
+        data: {
+            'selected': document.getElementById('select_personnel').value,
+            'exclude_weekends': $('input:radio[name=weekend_toggle]:checked').val(),
+            'color_by': $('input:radio[name=color_by]:checked').val(),
+        },
+        dataType: "json",
+
+        // This will update the plot with ID "bargraph" with new JSON data.
+        success: function (data) {
+            Plotly.newPlot('bargraph', data);
+        }
+    } );
+} );
+</script>
+
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-4">
+            <h1>BSPC effort log</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-3">
+            <label>Choose...</label>
+            <select class="form-control" id="select_personnel">
+                {% for p in personnel_list %}
+                    <option value="{{ p }}">{{ p }}</option>
+                {% endfor %}
+            </select>
+            <div class="form-check">
+                <label>Exclude weekends?</label>
+                <input
+                    class="form-check-input"
+                    type="radio"
+                    id="weekend_toggle1"
+                    name="weekend_toggle"
+                    value="no">no
+
+                <input
+                    class="form-check-input"
+                    type="radio"
+                    id="weekend_toggle1"
+                    name="weekend_toggle"
+                    checked
+                    value="yes">yes
+            </div>
+            <div class="form-check">
+                <label>Color by:</label>
+                <input
+                    class="form-check-input"
+                    type="radio"
+                    id="color_by1"
+                    name="color_by"
+                    value="project">project
+
+                <input
+                    class="form-check-input"
+                    type="radio"
+                    id="color_by2"
+                    name="color_by"
+                    checked
+                    value="pi">PI
+
+                <input
+                    class="form-check-input"
+                    type="radio"
+                    id="color_by2"
+                    name="color_by"
+                    value="personnel">personnel
+            </div>
+
+        </div>
+        <div class="col-lg-12">
+            <div class="chart" id="bargraph">
+                <script>
+                    var graphs = {{ plot | safe }};
+                    Plotly.plot('bargraph', graphs, {});
+                </script>
+            </div>
+
+
+        </div>
+    </div>
+    {% if entries %}
+    <div class="row">
+        <div class="col-lg-12">
+            <table id="myTable", class="display">
+              <thead>
+                <td>ID</td>
+                <td>Personnel</td>
+                <td>PI</td>
+                <td>Project</td>
+                <td>Date</td>
+                <td>Fraction</td>
+                <td>Notes</td>
+                <td>Edit?</td>
+              </thead>
+              <tbody>
+                {% for entry in entries %}
+                  <tr>
+                    <td>{{ entry.id }}</td>
+                    <td>{{ entry.personnel }}</td>
+                    <td>{{ entry.pi }}</td>
+                    <td>{{ entry.project }}</td>
+                    <td>{{ entry.date }}</td>
+                    <td>{{ entry.fraction }}</td>
+                    <td>{{ entry.notes }}</td>
+                    <td><a href="{{ url_for("edit", id=entry.id ) }}">edit</a></td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <h1>Changelog</h1>
+            <h3>2022-12-15</h3>
+            <ul>
+                <li>
+                    Implemented NIH login via LDAP to address security
+                    compliance. This also now checks the "personnel" field in
+                    the entry form to ensure it's the logged-in user. Admin
+                    users (with AA accounts) can modify anyone's entries.
+                </li>
+            </ul>
+            <h3>2021-04-09</h3>
+                <ul>
+                    <li>
+                        Added option to color by project, PI, or person
+                    </li>
+                </ul>
+            <h3>2021-04-08</h3>
+                <ul>
+                    <li>Add new plotting functionality. By default, all personnel's
+                        effort are shown for the past week. Choose a name from the
+                        dropdown to show the effort for just that person, and use
+                        the range slider on the bottom to select a different time
+                        interval.
+                    </li>
+                    <li>
+                        Add a separate page for the changelog
+                    </li>
+
+                    <li>
+                        Added option to show/hide weekends in the plot (default is to hide them)
+                    </li>
+                    <li>
+                        Sort table by ID by default, so that most
+                        recently-added entries are at the top.
+                    </li>
+                </ul>
+            <h3>2021-04-03</h3>
+            <ul>
+                <li>Fix dates. Previously when adding a new entry, no matter
+                    what date you used it always changed to the current date
+                    and you had to edit the entry later. This has been fixed,
+                    and the date you set will be correctly used.</li>
+                <li>Table is sorted by date by default.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+__pycache__
+app.db
+env/
+app/certificate.crt
+*.bak
+.env
+.DS_Store

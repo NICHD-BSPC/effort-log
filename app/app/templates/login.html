@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+{{ super() }}
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm">
+            {% if form.csrf_token.errors %}
+                <div class="warning">You have submitted an invalid CSRF token</div>
+            {% endif %}
+            <h1>Login</h1>
+            <p>Please use your NIH credentials</p>
+        </div>
+    </div>
+
+    {% if wtf.form_errors(form) %}
+    <div class="row">
+        <div class="alert alert-danger">
+            {{ wtf.form_errors(form) }}
+        </div>
+    </div>
+    {% endif %}
+    <div class="row">
+        <div class="col-sm-5">
+        <form class="form form-horizontal" role="form"  method="post">
+            {{ form.hidden_tag() }}
+            {{ wtf.form_field(form.username) }}
+            {{ wtf.form_field(form.password) }}
+            {{ wtf.form_field(form.submit) }}
+        </form>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

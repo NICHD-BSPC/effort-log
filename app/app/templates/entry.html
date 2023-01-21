@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block scripts %}
+{{super()}}
+<script>
+
+// Check the current value of the PI field and requests the list of projects
+// for that PI as JSON (using the /getprojects/<pi> endpoint) and
+// then sets the dropdown list to be only that set of projects.
+//
+function updateproject() {
+    var pi = $('#pi').val();
+    $.getJSON(
+        '/getprojects' + '/' + pi,
+        function(data) {
+            $('#project').find('option').remove();
+            $.each(data, function(key, val) {
+                var option_item = '<option value="' + val + '">' + val + "</option>"
+                $('#project').append(option_item);
+            });
+
+            // If this is done anywhere else -- say, after running
+            // updateproject(), then it appears to get overwritten by the above.
+            // It's likely an order-of-events issue I don't fully understand,
+            // but it works fine here.
+            {% if entry %}
+            $('#project').val("{{ form.project.data }}");
+            {% endif %}
+        }
+    );
+}
+
+//
+// If entry is not None, we're in edit mode and we should set the projects to
+// the corresponding PI....
+//
+{% if entry %}
+
+$(function() {
+    updateproject();
+    $('#pi').change(updateproject);
+});
+
+
+//
+// ...otherwise we're in new entry mode. So we blank out the options for project and
+// attach the above updateproject() function to trigger whenever the value of PI
+// changes.
+//
+{% else %}
+$(function() {
+    $('#project').find('option').remove();
+    $('#pi').change(updateproject);
+});
+
+{% endif %}
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm">
+            {% if form.csrf_token.errors %}
+                <div class="warning">You have submitted an invalid CSRF token</div>
+            {% endif %}
+            {% if entry %}
+            <h1>BSPC daily entry (edit mode)</h1>
+            {% else %}
+            <h1>BSPC daily entry</h1>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if wtf.form_errors(form) %}
+    <div class="row">
+        <div class="alert alert-danger">
+            {{ wtf.form_errors(form) }}
+            <ul>
+            {% if form._other_entries_on_date %}
+                {% for e in form._other_entries_on_date %}
+                    {% if e.id != form.id.data|int %}
+                        <li>Fraction={{ e.fraction }}, {{ e }} (<a href="{{ url_for('edit', id=e.id) }}">edit</a>)</li>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+    <div class="row">
+        <div class="col-sm-5">
+        <form class="form form-horizontal" role="form"  method="post">
+            {{ form.hidden_tag() }}
+            {{ wtf.form_field(form.personnel) }}
+            {{ wtf.form_field(form.date) }}
+            {{ wtf.form_field(form.pi) }}
+            {{ wtf.form_field(form.project) }}
+            {{ wtf.form_field(form.fraction) }}
+            {{ wtf.form_field(form.notes) }}
+            {{ wtf.form_field(form.submit) }}
+        </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-2 col-sm-offset-3">
+            <small><em><p class="text-right"><a style="color:red" href="{{ url_for('delete', id=entry.id) }}">delete entry</a></small></em></p>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

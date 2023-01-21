@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1>Help</h1>
+            <ul>
+                <li>This app is designed to make it as easy as possible to
+                    enter what you worked on during the day.</li>
+
+                <li><b>If a PI or project doesn't exist,</b> let Ryan know on Slack.
+                    This is probably because a project has been created
+                    recently but the config for this app has not been
+                    updated.</li>
+
+                <li><b>If you worked on multiple projects </b>in a day create entries
+                    for each of them.  Note that the total fraction for the day
+                    cannot exceed 1.0.</li>
+
+                <li><b>A day does not need to sum to 1.0.</b> If you had meetings,
+                    went to talks, workshops, training, etc then this does not
+                    need to be entered.</li>
+
+                <li>If you worked on a core project, that should be entered.</li>
+
+                <li>If you worked on something that is core-related but not
+                    explicitly a project, choose core -> other.</li>
+            </ul>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
