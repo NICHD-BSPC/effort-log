@@ -1,5 +1,9 @@
-runs:
-  on: 'push'
-  using: 'docker'
-  image: 'Dockerfile'
-
+on: [push]
+jobs:
+  run-app:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: run app step
+        uses: ./
