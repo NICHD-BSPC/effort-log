@@ -267,7 +267,7 @@ def getprojects(pi):
     return json.dumps(sorted(app.config["YAML"]["projects"][pi]) + ["other"])
 
 
-@app.route("/tsv")
+@app.route("/csv")
 def tsv():
     """
     Exports a CSV of all entries.
