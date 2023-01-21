@@ -13,8 +13,8 @@ class Config(object):
     DATABASE_DIR = os.environ.get("DOCKER_DATABASE_DIR", basedir)
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{DATABASE_DIR}/app.db"
 
-    PROJECTS_PATH = "projects.yaml"
-    PERSONNEL_PATH = "personnel.yaml"
+    PROJECTS_PATH = os.path.join(basedir, "projects.yaml")
+    PERSONNEL_PATH = os.path.join(basedir, "personnel.yaml")
 
     projects = yaml.load(open(PROJECTS_PATH), Loader=yaml.FullLoader)
     personnel = yaml.load(open(PERSONNEL_PATH), Loader=yaml.FullLoader)
