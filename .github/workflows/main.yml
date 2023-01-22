@@ -14,7 +14,7 @@ jobs:
         run: |
           set -x
           docker ps
-          docker logs $(docker ps -a | grep effort-log | awk '{print $1}') || true
+          docker logs $(docker ps -a | grep effort-log_web | awk '{print $1}') || true
           curl http://localhost:4444 || true
           curl http://localhost:3536 || true
           curl http://localhost:80 || true
