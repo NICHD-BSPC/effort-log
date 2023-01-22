@@ -1,3 +1,16 @@
+"""
+Usage:
+
+docker compose --env-file app/.env up -d
+
+Then 
+
+to stop:
+
+docker compose --env-file app/.env down
+
+"""
+
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -7,9 +20,7 @@ driver = webdriver.Remote(
    command_executor='http://localhost:4444',
    options=webdriver.FirefoxOptions()
 )
-
-#driver = webdriver.Firefox()
-driver.get("http://127.0.0.1:3536")
+driver.get("http://web:80")
 driver.save_screenshot('1.png')
 add_entry_button = driver.find_element(By.XPATH, "//a[contains(text(), 'Add entry')]")
 add_entry_button.click()
