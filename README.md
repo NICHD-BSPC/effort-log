@@ -7,43 +7,51 @@ Programming Core](https://bioinformatics.nichd.nih.gov) but generalized for
 wider use.
 
 This app is intended to be lightweight, and only aids in the recording of
-effort. An assumption is that users, projects, and groups are changed much less
-often, so they are specified in YAML files. This can be manual, or the files
+effort. It assumes that users/projects/groups are changed infrequently, so they
+are specified in YAML files. These files can be updated manually, or the files
 can be tied in to other automation (e.g., using GitHub/GitLab APIs).
 
-It is implemented as a Flask app served by nginx in a Docker container. The
-only requirement is Docker Compose.
+It is implemented as a Flask app served by nginx in a Docker container, saving
+to a sqlite3 database on the host. Sqlite3 does not support concurrent writes,
+so only one person can save to the database at a time. Thus, another assumption
+is that usage is relatively low.
+
+The only requirement is Docker Compose.
 
 **Quickstart**
 
 - [Install Docker Compose](https://docs.docker.com/compose/install/) 
 - In the top level of the repo, run `docker compose --env-file app/.env up -d`
   to run the app in the background.
-- Visit `localhost:3536` to see the app (or `IP:3536` to view it from another machine on the network).
+- Visit `localhost:3536` to see the app (or `IP:3536` to view it from another
+  machine on the network).
 - To stop, run `docker compose --env-file app/.env down`.
 
 The app will then be available on `localhost:3536`. Use the "Add entry" button
 to add new entries; the home page will plot entries. Colors and filtering are
-configurable by dropdown and radio buttons.
+configurable by dropdown and radio buttons (e.g., by person to see who hasn't
+recorded any entries recently).
 
-Get a CSV of the database with from `localhost:3536/csv`.
+Get a CSV of the database with from `localhost:3536/csv`. You can use this for
+all sorts of downstream aggregation and reporting.
 
 The app's database will be found in the current directory, `app.db`, and will
-be persistent across containers. Configure this in `app/.env` using the
-variable `HOST_DATABASE_DIR`.
+be persistent across containers. Configure this location in `app/.env` using
+the variable `HOST_DATABASE_DIR`.
 
 ## Configuration
 
 - **`app/.env`** contains the configuration. This file is sourced by docker
   compose as well as in the app config (in `app/config.py`).
 - If you want to use LDAP (and know the relevant settings), you can set
-  `DISABLE_LDAP=0` and fill in the LDAP-related env vars.
+  `DISABLE_LDAP=0` and fill in the LDAP-related env vars (note: while this
+  works locally, the current tests do not test LDAP functionality)
 - `app/personnel.yaml` is a YAML file containing a simple list of users. It can
   be manually updated or plugged in to automation.
 - `app/projects.yaml` is a YAML file representing a dictionary, where keys are
-  top-level grouping (here, PIs or labs in the context of projects for
-  a bioinformatics core), and values are lists of projects under that grouping.
-  It can be manually edited or plugged in to automation.
+  top-level grouping (e.g., PIs or labs in the context of a bioinformatics
+  core), and values are lists of projects under that grouping. It can be
+  manually edited or plugged in to automation.
 
 ## Administration
 
@@ -60,12 +68,12 @@ variable `HOST_DATABASE_DIR`.
 ## Testing
 
 GitHub Actions are configured in `.github/workflows/main.yml` to use Selenium
-for testing. See `compose-test.yml`, which overrides default settings in
+for testing. The file `compose-test.yml` overrides default settings in
 `compose.yml`, which also starts a Selenium container on the same network and
-uses a different database name. The tests are in `test/test.py` and generate
-screenshots that are stored as GH Actions artifacts.
+uses a different database name. The tests are in `test/test.py`. They also
+generate screenshots that are stored as GH Actions artifacts.
 
-Run the tests, which require the `selenium` Python package (can be `pip` or
+Running the tests requires the `selenium` Python package (can be `pip` or
 `conda`-installed).
 
 ```bash
@@ -145,7 +153,7 @@ framework.
 ### Docker-specific notes
 
 The Docker container builds from the
-[`uwsgi-nginx-flask`](https://github.com/tiangolo/uwsgi-nginx-flask-docker),
+[`uwsgi-nginx-flask`](https://github.com/tiangolo/uwsgi-nginx-flask-docker)
 Docker container which has some nice docs.
 
 The build process copies the entire app directory into the container.
