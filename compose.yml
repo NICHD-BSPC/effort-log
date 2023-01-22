@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  web:
+    build: .
+    volumes:
+      - ".:${DOCKER_DATABASE_DIR}"
+    ports:
+      - "${DOCKER_PORT}:5000"
+  selenium:
+    image: "selenium/standalone-firefox:4.7.2-20221219"
+    shm_size: 2gb
+    ports:
+      - "4444:4444"
+

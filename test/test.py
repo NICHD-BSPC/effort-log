@@ -3,7 +3,12 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
-driver = webdriver.Firefox()
+driver = webdriver.Remote(
+   command_executor='http://localhost:4444',
+   options=webdriver.FirefoxOptions()
+)
+
+#driver = webdriver.Firefox()
 driver.get("http://127.0.0.1:3536")
 driver.save_screenshot('1.png')
 add_entry_button = driver.find_element(By.XPATH, "//a[contains(text(), 'Add entry')]")

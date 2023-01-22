@@ -5,5 +5,5 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v3
-      - name: run app step
-        uses: ./
+      - name: docker-up
+        run: docker-compose --env-file app/.env up -d

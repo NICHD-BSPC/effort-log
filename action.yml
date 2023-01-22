@@ -1,4 +1,0 @@
-name: 'run app'
-runs:
-  using: 'docker'
-  image: 'Dockerfile'
