@@ -73,6 +73,8 @@ docker compose --env-file app/.env -f compose.yml -f compose-test.yml up -d
 python test/test.py
 ```
 
+Watch what is happening with the tests by visiting this URL:
+http://localhost:7900/?autoconnect=1&resize=scale&password=secret.
 
 ## Notes on architecture
 
