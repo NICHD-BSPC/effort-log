@@ -13,6 +13,7 @@ jobs:
       - name: test
         run: |
           set -x
+          sleep 20
           docker ps
           docker logs $(docker ps -a | grep effort-log_web | awk '{print $1}') || true
           curl http://localhost:4444 || true
