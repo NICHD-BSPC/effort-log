@@ -8,5 +8,10 @@ jobs:
       - name: docker-up
         run: |
           docker-compose --env-file app/.env up -d
+      - name: test
+        run: |
+          curl http://localhost:4444
+          curl http://localhost:3536
+          docker ps
           pip install selenium
           python test/test.py
