@@ -6,8 +6,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
       - name: docker-up
-        run: docker-compose --env-file app/.env up -d
-      - name: tests
         run: |
+          docker-compose --env-file app/.env up -d
           pip install selenium
           python test/test.py
