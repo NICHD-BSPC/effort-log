@@ -1,6 +1,6 @@
 version: "3.9"
 services:
   web:
-    container_name: "${DOCKER_CONTAINER}"
+    container_name: "effort-app"
     ports:
       - "3536:80"
