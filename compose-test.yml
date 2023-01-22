@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+  web:
+    container_name: "web-app-test"
+    environment:
+      - DATABASE_NAME=app_test.db
+    ports:
+      - "3537:80"
+  selenium:
+    image: "selenium/standalone-firefox:4.7.2-20221219"
+    container_name: "selenium"
+    shm_size: 2gb
+    ports:
+      - "4444:4444"
+      - "7900:7900"
+
+networks:
+  default:
+    name: "effort-app-test-network"
+

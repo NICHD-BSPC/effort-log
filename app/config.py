@@ -11,7 +11,8 @@ class Config(object):
 
     SECRET_KEY = os.environ.get("SECRET_KEY") or "unknown"
     DATABASE_DIR = os.environ.get("DOCKER_DATABASE_DIR", basedir)
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{DATABASE_DIR}/app.db"
+    DATABASE_NAME = os.environ.get("DATABASE_NAME")
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{DATABASE_DIR}/{DATABASE_NAME}"
 
     PROJECTS_PATH = os.path.join(basedir, "projects.yaml")
     PERSONNEL_PATH = os.path.join(basedir, "personnel.yaml")
