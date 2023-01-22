@@ -9,16 +9,11 @@ jobs:
         run: |
           docker-compose --env-file app/.env up -d
           docker ps -a
+          # give some time for Flask to spin up.
+          sleep 20
+          docker logs $(docker ps -a | grep effort-log_web | awk '{print $1}') || true
 
       - name: test
         run: |
-          set -x
-          sleep 20
-          docker ps
-          docker logs $(docker ps -a | grep effort-log_web | awk '{print $1}') || true
-          curl http://localhost:4444 || true
-          curl http://localhost:3536 || true
-          curl http://localhost:80 || true
-          #
-          # pip install selenium
-          # python test/test.py
+          pip install selenium
+          python test/test.py
