@@ -8,6 +8,6 @@ jobs:
       - name: docker-up
         run: docker-compose --env-file app/.env up -d
       - name: tests
-        run:
-          - pip install selenium
-          - python test/test.py
+        run: |
+          pip install selenium
+          python test/test.py
