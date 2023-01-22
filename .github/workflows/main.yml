@@ -1,0 +1,29 @@
+on: [push]
+jobs:
+  run-app:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: docker-up
+        run: |
+          docker-compose -f compose.yml -f compose-test.yml --env-file app/.env up -d
+          docker ps -a
+          # give some time for Flask to spin up.
+          sleep 20
+          docker logs $(docker ps -a | grep effort-app | awk '{print $1}') || true
+
+      - name: test
+        run: |
+          pip install -r test/test-requirements.txt
+          python test/test.py
+
+          # During testing we create screenshots; package them up here to store
+          # as artifacts for later inspection
+          tar -czf screenshots.tar.gz *.png
+
+      - name: artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: screenshots
+          path: screenshots.tar.gz

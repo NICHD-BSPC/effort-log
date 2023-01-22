@@ -2,21 +2,29 @@
 
 The goal of this application is to make it as easy as possible for each person
 to enter their daily work on various projects, exposing data to downstream
-tools. It was originally developed for the [Bioinformatics
-and Scientific Programming Core](https://bioinformatics.nichd.nih.gov) but
-generalized for
+tools. It was originally developed for the [Bioinformatics and Scientific
+Programming Core](https://bioinformatics.nichd.nih.gov) but generalized for
 wider use.
 
-It is implemented as a Flask app running in a Docker container.
+This app is intended to be lightweight, and only aids in the recording of
+effort. An assumption is that users, projects, and groups are changed much less
+often, so they are specified in YAML files. This can be manual, or the files
+can be tied in to other automation (e.g., using GitHub/GitLab APIs).
 
-**Quickstart** (once configured):
+It is implemented as a Flask app served by nginx in a Docker container. The
+only requirement is Docker Compose.
 
-- `./build-and-run` to (re)build the container and run it
-- `./stop` to bring down the server and container
+**Quickstart**
+
+- [Install Docker Compose](https://docs.docker.com/compose/install/) 
+- In the top level of the repo, run `docker compose --env-file app/.env up -d`
+  to run the app in the background.
+- Visit `localhost:3536` to see the app (or `IP:3536` to view it from another machine on the network).
+- To stop, run `docker compose --env-file app/.env down`.
 
 The app will then be available on `localhost:3536`. Use the "Add entry" button
-to add new entries; the home page will plot entries, with colors/filtering
-configurable by dropdown and radio buttons, as well as a table.
+to add new entries; the home page will plot entries. Colors and filtering are
+configurable by dropdown and radio buttons.
 
 Get a CSV of the database with from `localhost:3536/csv`.
 
@@ -26,22 +34,47 @@ variable `HOST_DATABASE_DIR`.
 
 ## Configuration
 
-- **`app/.env`** contains the configuration. This file is sourced by the
-  wrapper scripts above as well as in the app config (in `app/config.py`).
+- **`app/.env`** contains the configuration. This file is sourced by docker
+  compose as well as in the app config (in `app/config.py`).
 - If you want to use LDAP (and know the relevant settings), you can set
   `DISABLE_LDAP=0` and fill in the LDAP-related env vars.
-- `app/personnel.yaml` is a YAML file containing a simple list of users
+- `app/personnel.yaml` is a YAML file containing a simple list of users. It can
+  be manually updated or plugged in to automation.
 - `app/projects.yaml` is a YAML file representing a dictionary, where keys are
   top-level grouping (here, PIs or labs in the context of projects for
   a bioinformatics core), and values are lists of projects under that grouping.
+  It can be manually edited or plugged in to automation.
 
 ## Administration
 
-Here, `$NAME` is set by the `DOCKER_CONTAINER` variable in `app/.env`, which by
-default is `effort-app`.
+- The file `compose.yml` contains the baseline docker config and is used by
+  default
+- The file `docker-compose.override.yml` is also used by default and fills in
+  production values
+- The file `compose-test.yml` is only used for testing (see testing section
+  below)
+- Run `docker logs effort-app -f` for logs
+- Run `docker exec -it effort-app /bin/bash` to interactively inspect the
+  running container
 
-- `docker logs $NAME -f` for logs
-- `docker exec -it $NAME /bin/bash` to interactively inspect running container
+## Testing
+
+GitHub Actions are configured in `.github/workflows/main.yml` to use Selenium
+for testing. See `compose-test.yml`, which overrides default settings in
+`compose.yml`, which also starts a Selenium container on the same network and
+uses a different database name. The tests are in `test/test.py` and generate
+screenshots that are stored as GH Actions artifacts.
+
+Run the tests, which require the `selenium` Python package (can be `pip` or
+`conda`-installed).
+
+```bash
+docker compose --env-file app/.env -f compose.yml -f compose-test.yml up -d
+python test/test.py
+```
+
+Watch what is happening with the tests by visiting this URL:
+http://localhost:7900/?autoconnect=1&resize=scale&password=secret.
 
 ## Notes on architecture
 
@@ -49,10 +82,10 @@ The code is heavily inspired by the *excellent* [Flask Mega-Tutorial
 series](https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-i-hello-world).
 Here's a brief guide to the moving parts.
 
-### Config
+### Config notes
 
 - `app/config.py` reads in the YAML files below and sets up the location of the
-  database. It uses `dotenv` to source `app/.env` variables into the
+  database. It uses the `dotenv` package to source `app/.env` variables into the
   environment.
 
 - `app/personnel.yaml` is a simple list of people. It is used to populate
@@ -68,7 +101,7 @@ Here's a brief guide to the moving parts.
   `app/prestart.sh`.
 
 
-### Code
+### Code notes
 
 - `app/app/main.py` is imported and called from `uwsgi.ini` (module is
   `app.main`; callable is `app`).
@@ -85,20 +118,22 @@ Here's a brief guide to the moving parts.
 
 - `app/app/models.py` defines the main `Entry` object which is stored in the db
 
-### Templates, CSS, JavaScript
+### Templates, CSS, JavaScript notes
 
-Templates use the Flask-Bootstrap template. Note that this package currently
-uses a slightly out-of-date version of the Bootstrap framework.
+Templates use the Flask-Bootstrap template. Note that the Flask-Bootstrap
+package currently uses a slightly out-of-date version of the Bootstrap
+framework.
 
-- `app/app/templates/base.html` defines the base page that other templates
-  inherit from. JQuery and DataTables are imported here (used for displaying
-  the entries)
+- `app/app/templates/base.html`: this template defines the base page that other
+  templates inherit from. JQuery and DataTables are imported here (used for
+  displaying the entries)
 
-- `app/app/templates/entry.html` is the entry page with the form. This one gets
-  a little complicated in that there is JavaScript to auto-populate the
-  dropdowns of the form. This is so that the "projects" dropdown only shows the
-  projects for the selected lab, to simplify the entry process. It also does
-  some fancy things with checking the total time entered for the day.
+- `app/app/templates/entry.html`: this template defines the page with the form
+  used for entries. This one gets a little complicated in that there is
+  JavaScript to auto-populate the dropdowns of the form. This is so that the
+  "projects" dropdown only shows the projects for the selected lab, to simplify
+  the entry process. It also does some fancy things with checking the total
+  time entered for the day.
 
 - `app/app/templates/help.html` is the static help page, manually edited.
 
@@ -107,7 +142,7 @@ uses a slightly out-of-date version of the Bootstrap framework.
 - `app/app/templates/index.html` is the main page that renders the DataTable
   from the db.
 
-### Docker-specific details
+### Docker-specific notes
 
 The Docker container builds from the
 [`uwsgi-nginx-flask`](https://github.com/tiangolo/uwsgi-nginx-flask-docker),
@@ -117,13 +152,13 @@ The build process copies the entire app directory into the container.
 
 - `Dockerfile` is used to define the Docker container
 
+- `compose.yml` has baseline config which is by default extended by
+  `docker-compose.override.yml`. It can instead be overriddent with
+  `compose-test.yml` by specifying in the command. See testing section above.
+
 - `app/uwsgi.ini` configures the uWSGI instance running in the Docker
   container. **Its location and filename are expected by the Dockerfile.**
 
 - `app/prestart.sh` is used by the uwsgi-nginx-flask Docker container's startup
   script. If this specially-named file is in the app directory, it will be run
   before starting the app.
-
-- `stop` is a helper to stop the container
-
-- `build-and-run` builds the container and runs it immediately in daemon mode

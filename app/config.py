@@ -4,20 +4,18 @@ import dotenv
 
 dotenv.load_dotenv()
 
+
 class Config(object):
 
     basedir = os.path.abspath(os.path.dirname(__file__))
 
     SECRET_KEY = os.environ.get("SECRET_KEY") or "unknown"
     DATABASE_DIR = os.environ.get("DOCKER_DATABASE_DIR", basedir)
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{DATABASE_DIR}/app.db"
+    DATABASE_NAME = os.environ.get("DATABASE_NAME")
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{DATABASE_DIR}/{DATABASE_NAME}"
 
-    PROJECTS_PATH = os.environ.get(
-        "BSPC_EFFORT_PROJECTS", os.path.join(basedir, "projects.yaml")
-    )
-    PERSONNEL_PATH = os.environ.get(
-        "BSPC_EFFORT_PERSONNEL", os.path.join(basedir, "personnel.yaml")
-    )
+    PROJECTS_PATH = os.path.join(basedir, "projects.yaml")
+    PERSONNEL_PATH = os.path.join(basedir, "personnel.yaml")
 
     projects = yaml.load(open(PROJECTS_PATH), Loader=yaml.FullLoader)
     personnel = yaml.load(open(PERSONNEL_PATH), Loader=yaml.FullLoader)
