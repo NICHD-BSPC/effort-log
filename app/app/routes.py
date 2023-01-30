@@ -21,6 +21,7 @@ from app.forms import EffortForm
 from app.models import Entry
 
 import logging
+
 logging.basicConfig(level=logging.INFO)
 
 # If LDAP is disabled, then create dummy decorators
@@ -45,6 +46,7 @@ else:
     import flask_login
     from flask_ldap3_login import forms as flask_ldap3_login_forms
     from flask_login import current_user
+
     # The login_manager handles Flask login operations, and the ldap_manager
     # handles communication and authentication with the LDAP server.
     login_manager = flask_login.LoginManager(app)
@@ -53,9 +55,7 @@ else:
     # Setting this attribute tells Flask-Login what route to use when redirecting
     # a user to log in.
     login_manager.login_view = "login"
-    login_manager.login_message = (
-        "Please log in to see this page."
-    )
+    login_manager.login_message = "Please log in to see this page."
 
     # Sets up a TLS context with cert, which we need for connecting to the LDAP
     # server.
@@ -73,10 +73,8 @@ else:
         tls_ctx=tls_ctx,
     )
 
-
     # Stores current users
     users = {}
-
 
     class User(flask_login.UserMixin):
         """
@@ -98,7 +96,6 @@ else:
             # Note: Flask-Login requires this to be a string.
             return self.dn
 
-
     # Flask-Login manager requires a callback that takes the string ID of a user
     # and returns the corresponding User object (here, they are stored in the
     # global dict keyed by LDAP DN)
@@ -107,7 +104,6 @@ else:
         if id in users:
             return users[id]
         return None
-
 
     # This is the means by which we communicate between LDAP authentication (via
     # the LDAP3LoginManager) and Flask-Login's LoginManager
@@ -140,7 +136,7 @@ def login():
         ):
             return flask.abort(400)
 
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for("index"))
     return flask.render_template("login.html", form=form)
 
 
@@ -148,7 +144,8 @@ def login():
 @app.route("/index")
 @flask_login.login_required
 def index():
-    # Identify the set of personnel to include in the selection dropdown
+    # Identify the set of personnel to include in the selection dropdown,
+    # populated from what's actually in the db (rather than the YAML)
     entries = Entry.query.all()
     personnel_list = ["all"] + list(set([e.personnel for e in entries]))
     bar = plot_over_time()
