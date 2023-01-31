@@ -12,6 +12,7 @@ from flask import render_template, url_for, flash, redirect, make_response, requ
 from sqlalchemy import func
 import ldap3
 import pandas
+import yaml
 import plotly
 import plotly.express as px
 import plotly.graph_objs as go
@@ -21,6 +22,7 @@ from app.forms import EffortForm
 from app.models import Entry
 
 import logging
+
 logging.basicConfig(level=logging.INFO)
 
 # If LDAP is disabled, then create dummy decorators
@@ -45,6 +47,7 @@ else:
     import flask_login
     from flask_ldap3_login import forms as flask_ldap3_login_forms
     from flask_login import current_user
+
     # The login_manager handles Flask login operations, and the ldap_manager
     # handles communication and authentication with the LDAP server.
     login_manager = flask_login.LoginManager(app)
@@ -53,9 +56,7 @@ else:
     # Setting this attribute tells Flask-Login what route to use when redirecting
     # a user to log in.
     login_manager.login_view = "login"
-    login_manager.login_message = (
-        "Please log in to see this page."
-    )
+    login_manager.login_message = "Please log in to see this page."
 
     # Sets up a TLS context with cert, which we need for connecting to the LDAP
     # server.
@@ -73,10 +74,8 @@ else:
         tls_ctx=tls_ctx,
     )
 
-
     # Stores current users
     users = {}
-
 
     class User(flask_login.UserMixin):
         """
@@ -98,7 +97,6 @@ else:
             # Note: Flask-Login requires this to be a string.
             return self.dn
 
-
     # Flask-Login manager requires a callback that takes the string ID of a user
     # and returns the corresponding User object (here, they are stored in the
     # global dict keyed by LDAP DN)
@@ -108,7 +106,6 @@ else:
             return users[id]
         return None
 
-
     # This is the means by which we communicate between LDAP authentication (via
     # the LDAP3LoginManager) and Flask-Login's LoginManager
     @ldap_manager.save_user
@@ -116,6 +113,22 @@ else:
         user = User(dn, username, data)
         users[dn] = user
         return user
+
+
+def _get_projects():
+    """
+    Dynamically load projects
+    """
+    projects = yaml.load(open(app.config["PROJECTS_PATH"]), Loader=yaml.FullLoader)
+    return projects
+
+
+def _get_personnel():
+    """
+    Dynamically load personnel
+    """
+    personnel = yaml.load(open(app.config["PERSONNEL_PATH"]), Loader=yaml.FullLoader)
+    return personnel
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -140,7 +153,7 @@ def login():
         ):
             return flask.abort(400)
 
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for("index"))
     return flask.render_template("login.html", form=form)
 
 
@@ -148,7 +161,8 @@ def login():
 @app.route("/index")
 @flask_login.login_required
 def index():
-    # Identify the set of personnel to include in the selection dropdown
+    # Identify the set of personnel to include in the selection dropdown,
+    # populated from what's actually in the db (rather than the YAML)
     entries = Entry.query.all()
     personnel_list = ["all"] + list(set([e.personnel for e in entries]))
     bar = plot_over_time()
@@ -180,18 +194,19 @@ def entry_page(entry=None):
     else:
         form = EffortForm()
 
+    configured_projects = _get_projects()
+    configured_personnel = _get_personnel()
+
     # Note that the form validation will reject the "---"; it's used here as
     # a placeholder to remind the user that they need to select a PI first.
     #
     # Here we manually append the "other" option. It's not included in the YAML
     # config because doing so would make it harder to automatically update that
     # file
-    form.pi.choices = (
-        ["---"] + sorted(app.config["YAML"]["projects"].keys()) + ["other"]
-    )
+    form.pi.choices = ["---"] + sorted(configured_projects.keys()) + ["other"]
 
     # Add the "personnel" (=people)
-    form.personnel.choices = app.config["YAML"]["personnel"]
+    form.personnel.choices = configured_personnel
 
     # The WTForms validation will be checking for the following projects as
     # valid options, but the javascript in the template will be modifying the
@@ -199,7 +214,7 @@ def entry_page(entry=None):
     #
     # We also include "other" at the end, similar to PIs above.
     projects = []
-    for i in app.config["YAML"]["projects"].values():
+    for i in configured_projects.values():
         projects.extend(i)
     projects = sorted(projects) + ["other"]
 
@@ -264,7 +279,7 @@ def getprojects(pi):
     """
     Given a PI, returns a JSON list of configured projects.
     """
-    return json.dumps(sorted(app.config["YAML"]["projects"][pi]) + ["other"])
+    return json.dumps(sorted(_get_projects()[pi]) + ["other"])
 
 
 @app.route("/csv")

@@ -2,8 +2,6 @@ version: "3.9"
 services:
   web:
     container_name: "web-app-test"
-    environment:
-      - DATABASE_NAME=app_test.db
     ports:
       - "3537:80"
   selenium:

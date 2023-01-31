@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Override so we don't clobber a production database
+export HOST_DATABASE="./app_test.db"

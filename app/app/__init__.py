@@ -6,6 +6,7 @@ from flask_bootstrap import Bootstrap
 
 db = SQLAlchemy()
 
+
 def create_app():
     app = Flask(__name__, instance_relative_config=False)
     app.config.from_object(Config)
@@ -16,4 +17,5 @@ def create_app():
 
     with app.app_context():
         from . import routes, models
+
         return app

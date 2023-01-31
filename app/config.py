@@ -10,23 +10,15 @@ class Config(object):
     basedir = os.path.abspath(os.path.dirname(__file__))
 
     SECRET_KEY = os.environ.get("SECRET_KEY") or "unknown"
-    DATABASE_DIR = os.environ.get("DOCKER_DATABASE_DIR", basedir)
-    DATABASE_NAME = os.environ.get("DATABASE_NAME")
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{DATABASE_DIR}/{DATABASE_NAME}"
+    DATABASE_PATH = os.environ.get("DOCKER_DATABASE")
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{DATABASE_PATH}"
 
     PROJECTS_PATH = os.path.join(basedir, "projects.yaml")
     PERSONNEL_PATH = os.path.join(basedir, "personnel.yaml")
 
-    projects = yaml.load(open(PROJECTS_PATH), Loader=yaml.FullLoader)
-    personnel = yaml.load(open(PERSONNEL_PATH), Loader=yaml.FullLoader)
-
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    YAML = {
-        "personnel": personnel,
-        "projects": projects,
-    }
 
-    # These are loaded into the environment with load_env
+    # These are loaded into the environment with dotenv.load_dotenv() above.
     def get(var):
         return os.environ.get(var, "")
 

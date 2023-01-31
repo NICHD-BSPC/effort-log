@@ -12,7 +12,7 @@ USE_LOGIN = not bool(int(os.environ.get("DISABLE_LDAP")))
 if USE_LOGIN:
 
     def IsLoggedInUser(form, field):
-        admin_users = os.environ.get("ADMIN_USERS", "").split(',')
+        admin_users = os.environ.get("ADMIN_USERS", "").split(",")
         if (
             form.personnel.data != current_user.username
             and current_user.username not in admin_users
@@ -23,9 +23,12 @@ if USE_LOGIN:
                 logged in as {current_user.username}!
                 """
             )
+
 else:
+
     def IsLoggedInUser(*args, **kwargs):
         pass
+
 
 def not_dashes(form, field):
     if field.data == "---":
@@ -68,7 +71,6 @@ def day_sums_to_1(form, field):
             or edit the following other entries for this day:
             """
         )
-
 
 
 class EffortForm(FlaskForm):
