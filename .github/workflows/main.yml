@@ -10,6 +10,7 @@ jobs:
           (
             source app/.env
             source app/.test_env
+            touch $HOST_DATABASE
             docker-compose -f compose.yml -f compose-test.yml --env-file app/.env up -d
           )
           docker ps -a
