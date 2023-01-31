@@ -15,7 +15,10 @@ jobs:
           docker ps -a
           # give some time for Flask to spin up.
           sleep 20
-          docker logs $(docker ps -a | grep effort-app | awk '{print $1}') || true
+
+          # and then check the logs to confirm
+          docker logs web-app-test
+          docker logs selenium
 
       - name: test
         run: |
