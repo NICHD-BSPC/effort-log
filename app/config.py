@@ -16,16 +16,9 @@ class Config(object):
     PROJECTS_PATH = os.path.join(basedir, "projects.yaml")
     PERSONNEL_PATH = os.path.join(basedir, "personnel.yaml")
 
-    projects = yaml.load(open(PROJECTS_PATH), Loader=yaml.FullLoader)
-    personnel = yaml.load(open(PERSONNEL_PATH), Loader=yaml.FullLoader)
-
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    YAML = {
-        "personnel": personnel,
-        "projects": projects,
-    }
 
-    # These are loaded into the environment with load_env
+    # These are loaded into the environment with dotenv.load_dotenv() above.
     def get(var):
         return os.environ.get(var, "")
 

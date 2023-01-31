@@ -12,6 +12,7 @@ from flask import render_template, url_for, flash, redirect, make_response, requ
 from sqlalchemy import func
 import ldap3
 import pandas
+import yaml
 import plotly
 import plotly.express as px
 import plotly.graph_objs as go
@@ -114,6 +115,22 @@ else:
         return user
 
 
+def _get_projects():
+    """
+    Dynamically load projects
+    """
+    projects = yaml.load(open(app.config["PROJECTS_PATH"]), Loader=yaml.FullLoader)
+    return projects
+
+
+def _get_personnel():
+    """
+    Dynamically load personnel
+    """
+    personnel = yaml.load(open(app.config["PERSONNEL_PATH"]), Loader=yaml.FullLoader)
+    return personnel
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     # This does the work to set up the form's validation to contack the LDAP
@@ -177,18 +194,19 @@ def entry_page(entry=None):
     else:
         form = EffortForm()
 
+    configured_projects = _get_projects()
+    configured_personnel = _get_personnel()
+
     # Note that the form validation will reject the "---"; it's used here as
     # a placeholder to remind the user that they need to select a PI first.
     #
     # Here we manually append the "other" option. It's not included in the YAML
     # config because doing so would make it harder to automatically update that
     # file
-    form.pi.choices = (
-        ["---"] + sorted(app.config["YAML"]["projects"].keys()) + ["other"]
-    )
+    form.pi.choices = ["---"] + sorted(configured_projects.keys()) + ["other"]
 
     # Add the "personnel" (=people)
-    form.personnel.choices = app.config["YAML"]["personnel"]
+    form.personnel.choices = configured_personnel
 
     # The WTForms validation will be checking for the following projects as
     # valid options, but the javascript in the template will be modifying the
@@ -196,7 +214,7 @@ def entry_page(entry=None):
     #
     # We also include "other" at the end, similar to PIs above.
     projects = []
-    for i in app.config["YAML"]["projects"].values():
+    for i in configured_projects.values():
         projects.extend(i)
     projects = sorted(projects) + ["other"]
 
@@ -261,7 +279,7 @@ def getprojects(pi):
     """
     Given a PI, returns a JSON list of configured projects.
     """
-    return json.dumps(sorted(app.config["YAML"]["projects"][pi]) + ["other"])
+    return json.dumps(sorted(_get_projects()[pi]) + ["other"])
 
 
 @app.route("/csv")
