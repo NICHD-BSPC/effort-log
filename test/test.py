@@ -1,7 +1,10 @@
 """
 Usage:
 
-    docker compose --env-file app/.env -f compose.yml -f compose-test.yml up -d
+    (
+      source app/.env; source app/.test_env; 
+      docker compose --env-file app/.env -f compose.yml -f compose-test.yml up -d
+    )
     python test/test.py
 
 Then to stop:

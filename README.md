@@ -20,38 +20,58 @@ The only requirement is Docker Compose.
 
 **Quickstart**
 
-- [Install Docker Compose](https://docs.docker.com/compose/install/) 
-- In the top level of the repo, run `docker compose --env-file app/.env up -d`
-  to run the app in the background.
-- Visit `localhost:3536` to see the app (or `IP:3536` to view it from another
+1. [Install Docker Compose](https://docs.docker.com/compose/install/).
+
+2. In the top level of the repo, run:
+
+```bash
+# Note the "()" to run in a subshell
+(
+  source app/.env;
+  touch $HOST_DATABASE;
+  docker compose --env-file app/.env up --build -d
+)
+```
+to run the app in the background. This command sources the env file in
+a subshell (so as not to contaminate the main shell), touches the database in
+case it does not already exist, builds the docker container if needed,  mounts
+the database and the application directory in the running container, and starts
+the app.
+
+3. Visit https://localhost:3536 to see the app (or `IP:3536` to view it from another
   machine on the network).
-- To stop, run `docker compose --env-file app/.env down`.
 
-The app will then be available on `localhost:3536`. Use the "Add entry" button
-to add new entries; the home page will plot entries. Colors and filtering are
-configurable by dropdown and radio buttons (e.g., by person to see who hasn't
-recorded any entries recently).
+4. To stop, run `docker compose --env-file app/.env down`.
 
-Get a CSV of the database with from `localhost:3536/csv`. You can use this for
-all sorts of downstream aggregation and reporting.
+When running, the app will be available on `localhost:3536`. Use the "Add
+entry" button to add new entries; the home page will plot entries. Colors and
+filtering are configurable by dropdown and radio buttons (e.g., color by person
+to see who hasn't recorded any entries recently).
+
+Get a CSV of the database by visiting `localhost:3536/csv`. You can use this
+for all sorts of downstream aggregation and reporting.
 
 The app's database will be found in the current directory, `app.db`, and will
 be persistent across containers. Configure this location in `app/.env` using
-the variable `HOST_DATABASE_DIR`.
+the variable `HOST_DATABASE`.
 
 ## Configuration
 
-- **`app/.env`** contains the configuration. This file is sourced by docker
+- **See `app/.env` for the configuration**. This file is sourced by docker
   compose as well as in the app config (in `app/config.py`).
 - If you want to use LDAP (and know the relevant settings), you can set
   `DISABLE_LDAP=0` and fill in the LDAP-related env vars (note: while this
   works locally, the current tests do not test LDAP functionality)
 - `app/personnel.yaml` is a YAML file containing a simple list of users. It can
-  be manually updated or plugged in to automation.
+  be manually updated or plugged in to automation. This file can be modified on
+  the host, and the running app will pick up the changes upon the next refesh
+  of the entry form.
 - `app/projects.yaml` is a YAML file representing a dictionary, where keys are
   top-level grouping (e.g., PIs or labs in the context of a bioinformatics
   core), and values are lists of projects under that grouping. It can be
-  manually edited or plugged in to automation.
+  manually edited or plugged in to automation. Like the personnel file, it can
+  be modified on the host and the running app will pick up the changes upon the
+  next refresh of the entry form.
 
 ## Administration
 
@@ -60,7 +80,8 @@ the variable `HOST_DATABASE_DIR`.
 - The file `docker-compose.override.yml` is also used by default and fills in
   production values
 - The file `compose-test.yml` is only used for testing (see testing section
-  below)
+  below). To avoid modifying any existing database, you should set the
+  `$HOST_DATABASE` env var on the host -- see the testing section below.
 - Run `docker logs effort-app -f` for logs
 - Run `docker exec -it effort-app /bin/bash` to interactively inspect the
   running container
@@ -77,9 +98,16 @@ Running the tests requires the `selenium` Python package (can be `pip` or
 `conda`-installed).
 
 ```bash
-export TEST_HOST_DATABASE=./app_testing.db
-touch $TEST_HOST_DATABASE
-HOST_DATABASE=$TEST_HOST_DATABASE docker compose --env-file app/.env -f compose.yml -f compose-test.yml up -d
+(
+  source app/.env
+  source app/.test_env
+  docker compose --env-file app/.env -f compose.yml -f compose-test.yml up -d
+)
+```
+
+Then run the tests:
+
+```bash
 python test/test.py
 ```
 
