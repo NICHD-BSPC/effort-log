@@ -7,7 +7,15 @@ jobs:
         uses: actions/checkout@v3
       - name: docker-up
         run: |
-          docker-compose -f compose.yml -f compose-test.yml --env-file app/.env up -d
+          export TEST_HOST_DATABASE=./app_test.db
+          touch $TEST_HOST_DATABASE
+          HOST_DATABASE=$TEST_HOST_DATABASE \
+            docker-compose \
+            -f compose.yml \
+            -f compose-test.yml \
+            --env-file app/.env \
+            up \
+            -d
           docker ps -a
           # give some time for Flask to spin up.
           sleep 20

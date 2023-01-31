@@ -77,7 +77,9 @@ Running the tests requires the `selenium` Python package (can be `pip` or
 `conda`-installed).
 
 ```bash
-docker compose --env-file app/.env -f compose.yml -f compose-test.yml up -d
+export TEST_HOST_DATABASE=./app_testing.db
+touch $TEST_HOST_DATABASE
+HOST_DATABASE=$TEST_HOST_DATABASE docker compose --env-file app/.env -f compose.yml -f compose-test.yml up -d
 python test/test.py
 ```
 
