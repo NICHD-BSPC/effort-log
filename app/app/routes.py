@@ -4,6 +4,7 @@ from io import StringIO
 import json
 from urllib.parse import urlparse, urljoin
 import datetime
+import os
 
 import flask
 from flask import current_app as app
@@ -19,7 +20,7 @@ import plotly.graph_objs as go
 
 from app import db
 from app.forms import EffortForm
-from app.models import Entry
+from app.models import Entry, User, build_user_data
 
 import logging
 
@@ -74,46 +75,57 @@ else:
         tls_ctx=tls_ctx,
     )
 
-    # Stores current users
+    # Stores current users (for this thread) for quick access
     users = {}
 
-    class User(flask_login.UserMixin):
-        """
-        Standard Flask user object, mostly just a container. See
-        https://flask-login.readthedocs.io/en/latest/#your-user-class for what is
-        required on this class, and what is inherited from UserMixin
-        """
+# Flask-Login manager requires a callback that takes the string ID of a user
+# and returns the corresponding User object
+@login_manager.user_loader
+def load_user(id):
+    if not is_user_allowed(id):
+        disable_user(id)
+        return None
+    
+    # first, check if user is cached
+    if id in users:
+        return users[id]
+    
+    # next, see if it exists in the database
+    user = User.query.get(id) # if this returns a user, then the id already exists in database
+    if user:
+        users[id] = user
+        return user
+    
+    # user does not exist in the database yet, return None to go to logon page
+    return None
 
-        def __init__(self, dn, username, data):
-            self.dn = dn
-            self.username = username
-            self.data = data
-            self.name = username
 
-        def __repr__(self):
-            return self.dn
-
-        def get_id(self):
-            # Note: Flask-Login requires this to be a string.
-            return self.dn
-
-    # Flask-Login manager requires a callback that takes the string ID of a user
-    # and returns the corresponding User object (here, they are stored in the
-    # global dict keyed by LDAP DN)
-    @login_manager.user_loader
-    def load_user(id):
-        if id in users:
-            return users[id]
+# This is the means by which we communicate between LDAP authentication (via
+# the LDAP3LoginManager) and Flask-Login's LoginManager
+@ldap_manager.save_user
+def save_user(dn, username, data, memberships):
+    if not is_user_allowed(username):
+        disable_user(username)
         return None
 
-    # This is the means by which we communicate between LDAP authentication (via
-    # the LDAP3LoginManager) and Flask-Login's LoginManager
-    @ldap_manager.save_user
-    def save_user(dn, username, data, memberships):
-        user = User(dn, username, data)
-        users[dn] = user
+    # See if user already exists in the database
+    user = User.query.get(username)
+    if user:
+        # Update the user information
+        User.data = build_user_data(data)
+        User.name = data["displayName"]
+        User.dn = dn
+        users[username] = user
         return user
-
+    else:
+        # create a new user with the LDAP data.
+        new_user = User(username, dn, data)
+        # add the new user to the database
+        db.session.add(new_user)
+        db.session.commit()
+        # add the user to the thread
+        users[username] = new_user
+        return new_user
 
 def _get_projects():
     """
@@ -138,6 +150,9 @@ def login():
     form = flask_ldap3_login_forms.LDAPLoginForm()
 
     if form.validate_on_submit():
+        if not form.user:
+            return flask.redirect(flask.url_for('login'))
+
         # If the LDAP form validated, we can tell the Flask-Login manager that
         # the user is logged in.
         flask_login.login_user(form.user)
@@ -155,6 +170,28 @@ def login():
 
         return flask.redirect(flask.url_for("index"))
     return flask.render_template("login.html", form=form)
+
+
+def disable_user(id):
+    user = User.query.get(id)
+    if user:
+        # remove user from the database, they've been removed.
+        db.session.delete(user)
+        db.session.commit()
+    flash(f"User {id} does not have permission to log in.", "danger")
+
+
+def is_user_allowed(id):
+    #check personnel.yaml to see if this person has permission to use the app
+    configured_personnel = _get_personnel()
+    if id in configured_personnel:
+        return True
+    #check ADMIN_USERS to see if this person has permission to use the app
+    admin_users = os.environ.get("ADMIN_USERS", "").split(',')
+    if id in admin_users:
+        return True
+    # not permitted
+    return False
 
 
 @app.route("/")
