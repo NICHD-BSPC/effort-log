@@ -191,7 +191,7 @@ The build process copies the entire app directory into the container.
 - `Dockerfile` is used to define the Docker container
 
 - `compose.yml` has baseline config which is by default extended by
-  `docker-compose.override.yml`. It can instead be overriddent with
+  `docker-compose.override.yml`. It can instead be overridden with
   `compose-test.yml` by specifying in the command. See testing section above.
 
 - `app/uwsgi.ini` configures the uWSGI instance running in the Docker
